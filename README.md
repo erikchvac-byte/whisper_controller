@@ -10,6 +10,9 @@ A modern, dark-mode GUI application for controlling Whisper voice transcription 
 - **Model Download** - Download missing models directly from the GUI
 - **Real-Time Status** - Live process monitoring with PID and status display
 - **Activity Log** - Timestamped log of all operations
+- **System Tray Support** - Minimize to system tray with notifications and quick controls
+- **Process Output Capture** - Real-time stdout/stderr display in expandable UI section
+- **Enhanced Error Handling** - Validates paths, Python version, and provides actionable error messages
 - **Persistent Settings** - Saves window geometry and configuration
 - **Path Configuration** - Easy setup of Python interpreter and script paths
 
@@ -38,6 +41,7 @@ A modern, dark-mode GUI application for controlling Whisper voice transcription 
    - OpenAI Whisper (speech-to-text engine)
    - PyTorch and TorchAudio (ML dependencies)
    - psutil (process management)
+   - pystray (system tray support)
    - Pillow (image processing)
    - python-dotenv (configuration)
 
@@ -76,6 +80,26 @@ If you need a model that isn't installed:
 2. **Click "Download Model"**
 3. **Wait for the download** to complete (progress shown in Activity Log)
 4. **The model is now ready** to use
+
+### Using System Tray
+
+The application supports system tray functionality:
+
+1. **Minimize to tray** - Window minimizes to system tray (configurable in settings)
+2. **Tray menu** - Right-click the tray icon for quick controls:
+   - Show/Hide window
+   - Start/Stop Whisper
+   - Exit application
+3. **Notifications** - Receive system notifications when Whisper starts or stops
+
+### Viewing Process Output
+
+Monitor Whisper's real-time output:
+
+1. **Expand output section** - Click "▼ Show" under "Process Output"
+2. **View logs** - See timestamped stdout and stderr output
+3. **Clear output** - Click "Clear" to reset the display
+4. **Collapse when done** - Click "▲ Hide" to minimize the section
 
 ## Whisper Models Comparison
 
@@ -140,13 +164,19 @@ MyWisperAuto/
 
 ### Whisper Process Won't Start
 
-1. **Verify paths in "Configure Paths":**
-   - Python interpreter should exist
-   - Whisper script should exist
+1. **Check error messages** - The application now provides detailed validation:
+   - Script path configured and exists
+   - Python interpreter exists and is executable
+   - Python version is 3.8 or higher
+   - Error messages include "Action:" suggestions
 
-2. **Check Activity Log** for error messages
+2. **Verify paths in "Configure Paths":**
+   - Python interpreter should exist and be python.exe
+   - Whisper script should exist and be a .py file
 
-3. **Test Whisper manually:**
+3. **Check Activity Log** for detailed error messages
+
+4. **Test Whisper manually:**
    ```powershell
    cd C:\whisper
    .\venv\Scripts\Activate.ps1
@@ -199,6 +229,14 @@ For issues or questions:
 
 ---
 
-**Version:** 1.0.0
-**Author:** Whisper Auto Team
-**Last Updated:** January 2026
+**Version:** 1.1.0
+**Author:** Erik (erikchvac-byte)
+**Last Updated:** January 2, 2026
+
+## Recent Updates
+
+### Version 1.1.0 (January 2, 2026)
+- ✅ Added system tray support with notifications
+- ✅ Added real-time process output capture and display
+- ✅ Enhanced error handling with path and Python version validation
+- ✅ Improved user experience with actionable error messages
