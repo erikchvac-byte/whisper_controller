@@ -477,6 +477,16 @@ git commit -m "Description of changes"
 
 **Strategy**: Auto-route with Ollama-first, escalate to Claude when needed
 
+**Final Decision (January 2, 2026)**: ✅ **Keep current setup**
+- **Primary:** qwen3-coder:30b (Ollama, free)
+- **Fallback:** Claude Sonnet 4.5 (paid, high quality)
+- **Focus:** Continue tuning with focused prompts (<1500 tokens)
+
+**Alternatives Considered and Rejected**:
+- ❌ Four-tier routing (7b → 30b → Haiku → Sonnet) - Too complex for minimal savings
+- ❌ Switch to qwen2.5-coder:7b - Unnecessary optimization at this stage
+- ❌ Use Haiku 3.5 as first paid fallback - Current costs acceptable
+
 **Tasks Completed**: 3 high-priority features
 **Routing Decisions**: 5 total
 
@@ -488,7 +498,8 @@ git commit -m "Description of changes"
 
 **Success Rate**: 60% (3/5 with auto-escalation)
 **Cost Savings**: ~$0.10 saved by using Ollama for successful tasks
-**Recommendation**: Continue with Ollama-first strategy, keep prompts focused (<1500 tokens)
+**Estimated Costs**: ~$0.80 per 100 tasks (acceptable)
+**Review Cadence**: Continue reviewing every 5 routing decisions
 
 ---
 
