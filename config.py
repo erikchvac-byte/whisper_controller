@@ -136,6 +136,14 @@ class Config:
         """Set window position."""
         self.set('window_position', position)
 
+    def get_minimize_to_tray(self) -> bool:
+        """Get minimize to tray setting."""
+        return self.get('minimize_to_tray', False)
+
+    def set_minimize_to_tray(self, enabled: bool) -> None:
+        """Set minimize to tray setting."""
+        self.set('minimize_to_tray', enabled)
+
 
 # Global config instance
 config = Config()

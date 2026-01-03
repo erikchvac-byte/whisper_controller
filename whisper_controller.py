@@ -7,6 +7,7 @@ import subprocess
 import os
 import sys
 import time
+import threading
 import psutil
 from typing import Optional, Callable, Dict, Any
 from pathlib import Path
@@ -22,6 +23,9 @@ class WhisperController:
         self.pid: Optional[int] = None
         self.status_callback: Optional[Callable] = None
         self.log_callback: Optional[Callable] = None
+        self.process_output_callback: Optional[Callable] = None
+        self.output_threads: list = []
+        self.stop_output_reading = False
 
     def set_status_callback(self, callback: Callable[[str], None]) -> None:
         """Set callback for status updates."""
@@ -30,6 +34,14 @@ class WhisperController:
     def set_log_callback(self, callback: Callable[[str], None]) -> None:
         """Set callback for log messages."""
         self.log_callback = callback
+
+    def set_process_output_callback(self, callback: Callable[[str, str], None]) -> None:
+        """Set callback for process output messages.
+
+        Args:
+            callback: Function accepting (stream_type, message) where stream_type is 'stdout' or 'stderr'
+        """
+        self.process_output_callback = callback
 
     def _log(self, message: str) -> None:
         """Send log message to callback."""
@@ -40,6 +52,40 @@ class WhisperController:
         """Send status update to callback."""
         if self.status_callback:
             self.status_callback(status)
+
+    def _read_output_stream(self, stream, stream_name: str) -> None:
+        """Read output from a process stream in a background thread.
+
+        Args:
+            stream: The stream to read from (stdout or stderr)
+            stream_name: Name of the stream ('stdout' or 'stderr')
+        """
+        try:
+            for line in iter(stream.readline, b''):
+                if self.stop_output_reading:
+                    break
+
+                # Decode and strip the line
+                try:
+                    decoded_line = line.decode('utf-8', errors='replace').rstrip()
+                except Exception:
+                    decoded_line = str(line).rstrip()
+
+                # Only send non-empty lines
+                if decoded_line:
+                    if self.process_output_callback:
+                        self.process_output_callback(stream_name, decoded_line)
+                    # Also log to main log for debugging
+                    self._log(f"[{stream_name.upper()}] {decoded_line}")
+
+        except Exception as e:
+            self._log(f"Error reading {stream_name}: {str(e)}")
+        finally:
+            # Ensure stream is closed
+            try:
+                stream.close()
+            except Exception:
+                pass
 
     def is_running(self) -> bool:
         """Check if Whisper process is running."""
@@ -67,13 +113,68 @@ class WhisperController:
             return False
 
         script_path = config.get_script_path()
-        if not script_path or not os.path.exists(script_path):
-            self._log("Error: Whisper script path not configured or invalid")
+        if not script_path:
+            self._log("Error: Whisper script path not configured")
+            self._log("Action: Click 'Configure Paths' to set the script location")
+            return False
+
+        if not os.path.exists(script_path):
+            self._log(f"Error: Whisper script not found at {script_path}")
+            self._log("Action: Verify the file exists or update the path")
+            return False
+
+        if not script_path.endswith('.py'):
+            self._log(f"Error: Script must be a .py file. Found: {script_path}")
+            self._log("Action: Select a valid Python script file")
             return False
 
         python_path = config.get_python_path()
         if not os.path.exists(python_path):
             self._log(f"Error: Python interpreter not found at {python_path}")
+            self._log("Action: Install Python or update the interpreter path")
+            return False
+
+        if not os.access(python_path, os.X_OK):
+            self._log(f"Error: Python interpreter at {python_path} is not executable")
+            self._log("Action: Verify file permissions or select python.exe")
+            return False
+
+        # Check Python version
+        try:
+            result = subprocess.run(
+                [python_path, '--version'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            version_line = result.stdout.strip() if result.stdout else result.stderr.strip()
+
+            if 'Python 3.' not in version_line:
+                self._log(f"Error: Invalid Python version: {version_line}")
+                self._log("Action: Whisper requires Python 3.8 or higher")
+                return False
+
+            # Extract version number for more detailed check
+            try:
+                version_parts = version_line.replace('Python ', '').split('.')
+                major = int(version_parts[0])
+                minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+
+                if major < 3 or (major == 3 and minor < 8):
+                    self._log(f"Error: Python {major}.{minor} is too old")
+                    self._log("Action: Upgrade to Python 3.8 or higher")
+                    return False
+
+                self._log(f"Using Python {major}.{minor} at {python_path}")
+
+            except (ValueError, IndexError):
+                # Couldn't parse version, but "Python 3." was in output, so proceed
+                self._log(f"Python version check: {version_line}")
+
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError) as e:
+            self._log(f"Error: Could not verify Python version at {python_path}")
+            self._log(f"Details: {str(e)}")
+            self._log("Action: Ensure Python is properly installed")
             return False
 
         model = model or config.get_selected_model()
@@ -95,6 +196,29 @@ class WhisperController:
             )
 
             self.pid = self.process.pid
+
+            # Reset the stop flag
+            self.stop_output_reading = False
+
+            # Start output reading threads
+            stdout_thread = threading.Thread(
+                target=self._read_output_stream,
+                args=(self.process.stdout, 'stdout'),
+                daemon=True,
+                name="WhisperStdoutReader"
+            )
+            stderr_thread = threading.Thread(
+                target=self._read_output_stream,
+                args=(self.process.stderr, 'stderr'),
+                daemon=True,
+                name="WhisperStderrReader"
+            )
+
+            self.output_threads = [stdout_thread, stderr_thread]
+            stdout_thread.start()
+            stderr_thread.start()
+
+            self._log("Started output capture threads")
 
             # Wait a moment to check if it started successfully
             time.sleep(0.5)
@@ -147,6 +271,18 @@ class WhisperController:
 
             self.pid = None
             self.process = None
+
+            # Signal output threads to stop
+            self.stop_output_reading = True
+
+            # Wait for output threads to finish (with timeout)
+            for thread in self.output_threads:
+                if thread.is_alive():
+                    thread.join(timeout=2.0)
+
+            self.output_threads = []
+            self._log("Stopped output capture threads")
+
             self._update_status("Stopped")
             return True
 
