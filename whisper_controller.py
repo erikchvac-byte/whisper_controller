@@ -180,18 +180,22 @@ class WhisperController:
         model = model or config.get_selected_model()
 
         try:
-            # Construct command
-            cmd = [python_path, script_path]
+            # Construct command with unbuffered output
+            cmd = [python_path, '-u', script_path]  # -u flag forces unbuffered output
 
             self._log(f"Starting Whisper with model: {model}")
             self._log(f"Command: {' '.join(cmd)}")
 
-            # Start process
+            # Start process with environment to ensure unbuffered output
+            env = os.environ.copy()
+            env['PYTHONUNBUFFERED'] = '1'
+
             self.process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE,
+                env=env,
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
             )
 

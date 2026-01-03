@@ -411,6 +411,7 @@ git commit -m "Description of changes"
 | 2026-01-02 | 1.1.0 | Claude Code | Implemented System Tray Support |
 | 2026-01-02 | 1.1.0 | Claude Code | Implemented Process Output Capture |
 | 2026-01-02 | 1.1.0 | Claude Code | Improved Error Handling with validation |
+| 2026-01-03 | 1.2.0 | Claude Sonnet 4.5 + Ollama | Merged Activity Log into Process Output, Fixed output buffering, Fixed cached file bug, Created CUDA_OPTIMIZATION.md and ROUTING_POLICY.md |
 
 ---
 
@@ -500,6 +501,29 @@ git commit -m "Description of changes"
 **Cost Savings**: ~$0.10 saved by using Ollama for successful tasks
 **Estimated Costs**: ~$0.80 per 100 tasks (acceptable)
 **Review Cadence**: Continue reviewing every 5 routing decisions
+
+---
+
+## Next Steps
+
+### High Priority
+1. **Implement Routing Validator Agent**
+   - Create automated enforcement for ROUTING_POLICY.md rules
+   - Auto-route OLLAMA_ONLY tasks (score 0-30) to Ollama
+   - Require approval when override rate exceeds 20%
+   - Target: Achieve ≥80% Ollama usage in next sessions
+
+2. **Enable CUDA GPU Acceleration (Optional)**
+   - Reinstall PyTorch with CUDA 12.6 support
+   - Change ptt_whisper.py back to `--device cuda`
+   - Expected 6-10x speedup on RTX 3060 Ti
+   - See CUDA_OPTIMIZATION.md for instructions
+
+3. **Monitor Routing Compliance**
+   - Track routing decisions per session
+   - Ensure override rate stays ≤15%
+   - Validate all overrides have legitimate reasons
+   - Review routing stats every 10 decisions
 
 ---
 

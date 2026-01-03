@@ -9,9 +9,8 @@ A modern, dark-mode GUI application for controlling Whisper voice transcription 
 - **Model Selection** - Switch between all Whisper models (tiny, base, small, medium, large, turbo)
 - **Model Download** - Download missing models directly from the GUI
 - **Real-Time Status** - Live process monitoring with PID and status display
-- **Activity Log** - Timestamped log of all operations
+- **Activity & Process Output** - Unified section with timestamped logs and real-time stdout/stderr display
 - **System Tray Support** - Minimize to system tray with notifications and quick controls
-- **Process Output Capture** - Real-time stdout/stderr display in expandable UI section
 - **Enhanced Error Handling** - Validates paths, Python version, and provides actionable error messages
 - **Persistent Settings** - Saves window geometry and configuration
 - **Path Configuration** - Easy setup of Python interpreter and script paths
@@ -229,11 +228,19 @@ For issues or questions:
 
 ---
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Author:** Erik (erikchvac-byte)
-**Last Updated:** January 2, 2026
+**Last Updated:** January 3, 2026
 
 ## Recent Updates
+
+### Version 1.2.0 (January 3, 2026)
+- ✅ Merged Activity Log and Process Output into unified "Activity & Process Output" section
+- ✅ Increased minimum window size to 600x550 for better content visibility
+- ✅ Fixed cached transcription file bug (old text no longer reused)
+- ✅ Fixed Python output buffering for real-time process output visibility
+- ✅ Confirmed CPU transcription working (CUDA optimization available - see CUDA_OPTIMIZATION.md)
+- ✅ Added CUDA_OPTIMIZATION.md guide for RTX 3060 Ti GPU acceleration
 
 ### Version 1.1.0 (January 2, 2026)
 - ✅ Added system tray support with notifications

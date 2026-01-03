@@ -29,11 +29,12 @@ class WhisperAutoGUI(ctk.CTk):
         self.tray_icon: Optional[pystray.Icon] = None
         self.is_visible = True
         self.output_expanded = False
+        self.process_output_line_count = 0  # Line counter for heartbeat visualization
 
         # Configure window
         self.title(config.APP_NAME)
         self.geometry("600x500")
-        self.minsize(500, 400)
+        self.minsize(600, 550)
 
         # Set theme
         ctk.set_appearance_mode("dark")
@@ -74,8 +75,7 @@ class WhisperAutoGUI(ctk.CTk):
         """Setup the user interface."""
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)  # Log area expands
-        self.grid_rowconfigure(6, weight=0)  # Process output (expandable)
+        self.grid_rowconfigure(5, weight=1)  # Combined output area expands
 
         # Header
         self._create_header()
@@ -92,11 +92,8 @@ class WhisperAutoGUI(ctk.CTk):
         # Configuration display
         self._create_config_section()
 
-        # Activity log
-        self._create_log_section()
-
-        # Process output
-        self._create_process_output_section()
+        # Combined activity and process output
+        self._create_unified_output_section()
 
         # Footer
         self._create_footer()
@@ -286,96 +283,52 @@ class WhisperAutoGUI(ctk.CTk):
         )
         config_button.grid(row=0, column=2, rowspan=2, padx=10, pady=3)
 
-    def _create_log_section(self):
-        """Create activity log section."""
-        log_frame = ctk.CTkFrame(self, fg_color=self.colors['secondary'], corner_radius=10)
-        log_frame.grid(row=5, column=0, padx=10, pady=5, sticky="nsew")
-        log_frame.grid_columnconfigure(0, weight=1)
-        log_frame.grid_rowconfigure(1, weight=1)
-
-        # Log header
-        log_header = ctk.CTkLabel(
-            log_frame,
-            text="Activity Log",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            anchor="w"
-        )
-        log_header.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="w")
-
-        # Log textbox
-        self.log_textbox = ctk.CTkTextbox(
-            log_frame,
-            fg_color=self.colors['background'],
-            font=ctk.CTkFont(size=10, family="Consolas"),
-            wrap="word",
-            state="disabled"
-        )
-        self.log_textbox.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
-
-    def _create_process_output_section(self):
-        """Create process output display section."""
+    def _create_unified_output_section(self):
+        """Create unified activity and process output section."""
         output_frame = ctk.CTkFrame(self, fg_color=self.colors['secondary'], corner_radius=10)
-        output_frame.grid(row=6, column=0, padx=10, pady=5, sticky="nsew")
+        output_frame.grid(row=5, column=0, padx=10, pady=5, sticky="nsew")
         output_frame.grid_columnconfigure(0, weight=1)
-        output_frame.grid_rowconfigure(2, weight=1)
+        output_frame.grid_rowconfigure(1, weight=1)
 
-        # Header with expand/collapse button
+        # Header with clear button
         header_frame = ctk.CTkFrame(output_frame, fg_color="transparent")
         header_frame.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
         header_frame.grid_columnconfigure(0, weight=1)
 
         output_header = ctk.CTkLabel(
             header_frame,
-            text="Process Output",
+            text="Activity & Process Output",
             font=ctk.CTkFont(size=12, weight="bold"),
             anchor="w"
         )
         output_header.grid(row=0, column=0, sticky="w")
 
-        # Toggle button for expand/collapse
-        self.output_toggle_button = ctk.CTkButton(
-            header_frame,
-            text="▼ Show",
-            command=self._toggle_process_output,
-            width=100,
-            height=25,
-            fg_color=self.colors['background'],
-            hover_color=self.colors['secondary']
-        )
-        self.output_toggle_button.grid(row=0, column=1, sticky="e")
-
         # Clear button
         self.output_clear_button = ctk.CTkButton(
             header_frame,
             text="Clear",
-            command=self._clear_process_output,
+            command=self._clear_unified_output,
             width=80,
             height=25,
             fg_color=self.colors['background'],
             hover_color=self.colors['secondary']
         )
-        self.output_clear_button.grid(row=0, column=2, padx=(5, 0), sticky="e")
+        self.output_clear_button.grid(row=0, column=1, sticky="e")
 
-        # Separator
-        separator = ctk.CTkFrame(output_frame, height=2, fg_color=self.colors['background'])
-        separator.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
-
-        # Output textbox (initially hidden)
+        # Unified output textbox (always visible)
         self.output_textbox = ctk.CTkTextbox(
             output_frame,
             fg_color=self.colors['background'],
             font=ctk.CTkFont(size=10, family="Consolas"),
             wrap="word",
-            state="disabled",
-            height=0  # Start collapsed
+            state="disabled"
         )
-        self.output_textbox.grid(row=2, column=0, padx=10, pady=(0, 10), sticky="nsew")
-        self.output_textbox.grid_remove()  # Hide initially
+        self.output_textbox.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
 
     def _create_footer(self):
         """Create footer section."""
         footer_frame = ctk.CTkFrame(self, fg_color=self.colors['secondary'], corner_radius=10)
-        footer_frame.grid(row=7, column=0, padx=10, pady=(5, 10), sticky="ew")
+        footer_frame.grid(row=6, column=0, padx=10, pady=(5, 10), sticky="ew")
 
         footer_text = f"{config.APP_NAME} v{config.APP_VERSION} | {config.APP_AUTHOR}"
         footer_label = ctk.CTkLabel(
@@ -497,10 +450,14 @@ class WhisperAutoGUI(ctk.CTk):
             if success:
                 self.after(0, self._set_running_state, True)
                 self.after(0, self._show_notification, "Whisper Started", f"Running with {model} model")
+                self.after(0, self._log_message, f"Whisper running - Press Ctrl+Space to record and transcribe")
             else:
                 self.after(0, self._log_message, "Failed to start Whisper")
 
         threading.Thread(target=start_async, daemon=True).start()
+
+        # Immediately minimize focus impact - don't keep focus on button
+        self.after(100, lambda: self.focus())
 
     def _on_stop(self):
         """Handle stop button click."""
@@ -514,6 +471,9 @@ class WhisperAutoGUI(ctk.CTk):
                 self.after(0, self._log_message, "Failed to stop Whisper")
 
         threading.Thread(target=stop_async, daemon=True).start()
+
+        # Immediately minimize focus impact - don't keep focus on button
+        self.after(100, lambda: self.focus())
 
     def _on_model_change(self, model: str):
         """Handle model selection change."""
@@ -600,34 +560,17 @@ class WhisperAutoGUI(ctk.CTk):
         self._set_running_state(status['running'])
 
     def _log_message(self, message: str):
-        """Add message to activity log."""
+        """Add message to unified output with [LOG] prefix."""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        log_entry = f"[{timestamp}] {message}\n"
+        log_entry = f"[{timestamp}] [LOG] {message}\n"
 
-        self.log_textbox.configure(state="normal")
-        self.log_textbox.insert("end", log_entry)
-        self.log_textbox.see("end")
-        self.log_textbox.configure(state="disabled")
+        self.output_textbox.configure(state="normal")
+        self.output_textbox.insert("end", log_entry)
+        self.output_textbox.see("end")
+        self.output_textbox.configure(state="disabled")
 
-    def _toggle_process_output(self):
-        """Toggle process output display visibility."""
-        if self.output_expanded:
-            # Collapse
-            self.output_textbox.grid_remove()
-            self.output_textbox.configure(height=0)
-            self.output_toggle_button.configure(text="▼ Show")
-            self.output_expanded = False
-            self.grid_rowconfigure(6, weight=0)
-        else:
-            # Expand
-            self.output_textbox.grid()
-            self.output_textbox.configure(height=200)
-            self.output_toggle_button.configure(text="▲ Hide")
-            self.output_expanded = True
-            self.grid_rowconfigure(6, weight=1)
-
-    def _clear_process_output(self):
-        """Clear process output display."""
+    def _clear_unified_output(self):
+        """Clear unified output display."""
         self.output_textbox.configure(state="normal")
         self.output_textbox.delete("1.0", "end")
         self.output_textbox.configure(state="disabled")
@@ -646,13 +589,16 @@ class WhisperAutoGUI(ctk.CTk):
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
 
+        # Increment line counter for heartbeat visualization
+        self.process_output_line_count += 1
+
         # Color code based on stream type
         if stream_type == 'stderr':
             prefix = f"[{timestamp}] [ERR]"
         else:
             prefix = f"[{timestamp}] [OUT]"
 
-        output_entry = f"{prefix} {message}\n"
+        output_entry = f"[LINE {self.process_output_line_count}] {prefix} {message}\n"
 
         self.output_textbox.configure(state="normal")
         self.output_textbox.insert("end", output_entry)
