@@ -247,3 +247,50 @@ For issues or questions:
 - ✅ Added real-time process output capture and display
 - ✅ Enhanced error handling with path and Python version validation
 - ✅ Improved user experience with actionable error messages
+
+---
+
+## Roadmap
+
+### High Priority (Next Up)
+
+#### 1. Bug Hunting and Fixes
+Systematic bug identification and resolution across the application
+- Edge case testing in process management
+- Validate error handling paths
+- Test model switching scenarios
+- Verify thread cleanup
+- Memory leak detection
+
+#### 2. Working Indicator for Processing
+Clear visual feedback during transcription
+- Animated indicator when processing audio
+- "Listening..." state display
+- "Transcribing..." state display
+- Non-intrusive progress spinner
+
+#### 3. Enable CUDA GPU Acceleration (Optional)
+Leverage RTX 3060 Ti for 6-10x faster transcription
+- See [CUDA_OPTIMIZATION.md](CUDA_OPTIMIZATION.md) for instructions
+
+### Medium Priority
+
+#### 4. UI Dashboard Cleanup
+Achieve appliance-style dashboard aesthetic with improved layout and visual hierarchy
+
+#### 5. Keyboard Shortcuts
+Add shortcuts for Start (Ctrl+S), Stop (Ctrl+Q), Restart (Ctrl+R), and more
+
+#### 6. Enhanced Model Download UI
+Progress bars, download speed, time estimates, and cancel option
+
+### Low Priority
+
+#### 7. Auto-detection of Whisper Installation
+Automatic discovery and validation of Whisper installation
+
+#### 8. Cross-platform Support
+Linux and macOS compatibility
+
+#### 9. Additional Features
+Language selection, multiple microphone support, custom hotkeys, log export

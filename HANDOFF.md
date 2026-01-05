@@ -504,26 +504,91 @@ git commit -m "Description of changes"
 
 ---
 
-## Next Steps
+## Roadmap - Forward-Facing Plan
 
-### High Priority
-1. **Implement Routing Validator Agent**
-   - Create automated enforcement for ROUTING_POLICY.md rules
-   - Auto-route OLLAMA_ONLY tasks (score 0-30) to Ollama
-   - Require approval when override rate exceeds 20%
-   - Target: Achieve ≥80% Ollama usage in next sessions
+### High Priority (Next Up)
 
-2. **Enable CUDA GPU Acceleration (Optional)**
-   - Reinstall PyTorch with CUDA 12.6 support
-   - Change ptt_whisper.py back to `--device cuda`
-   - Expected 6-10x speedup on RTX 3060 Ti
-   - See CUDA_OPTIMIZATION.md for instructions
+#### 1. Bug Hunting and Fixes
+**Status**: Next up
+**Description**: Systematic bug identification and resolution
+- Search for edge cases in process management
+- Validate error handling paths
+- Test model switching scenarios
+- Verify thread cleanup on all exit paths
+- Check for memory leaks in long-running sessions
 
-3. **Monitor Routing Compliance**
-   - Track routing decisions per session
-   - Ensure override rate stays ≤15%
-   - Validate all overrides have legitimate reasons
-   - Review routing stats every 10 decisions
+#### 2. Working Indicator for Processing
+**Status**: Planned
+**Description**: Clear visual feedback during transcription
+- Add animated indicator when Whisper is processing audio
+- Show "Listening..." state when spacebar is held
+- Display "Transcribing..." state during processing
+- Add progress spinner or pulsing animation
+- Ensure indicator is visible and non-intrusive
+
+#### 3. Enable CUDA GPU Acceleration (Optional)
+**Status**: Documented, awaiting user decision
+**Description**: Leverage RTX 3060 Ti for faster transcription
+- Reinstall PyTorch with CUDA 12.6 support
+- Modify ptt_whisper.py to use `--device cuda`
+- Expected 6-10x speedup over CPU
+- See CUDA_OPTIMIZATION.md for full instructions
+
+### Medium Priority
+
+#### 4. UI Dashboard Cleanup
+**Status**: Planned
+**Description**: Achieve appliance-style dashboard aesthetic
+- Simplify control layout
+- Enhance visual hierarchy
+- Add status indicators with better visibility
+- Improve spacing and alignment
+- Consider card-based layout for sections
+
+#### 5. Keyboard Shortcuts
+**Status**: Not started
+**Description**: Add keyboard shortcuts for common actions
+- `Ctrl+S`: Start Whisper
+- `Ctrl+Q`: Stop Whisper
+- `Ctrl+R`: Restart Whisper
+- `Ctrl+D`: Download current model
+- `Ctrl+P`: Configure paths
+
+#### 6. Enhanced Model Download UI
+**Status**: Not started
+**Description**: Better feedback during model downloads
+- Progress bar for downloads
+- Download speed indicator
+- Estimated time remaining
+- Model size information in dropdown
+- Cancel download option
+
+### Low Priority
+
+#### 7. Auto-detection of Whisper Installation
+**Status**: Not started
+**Description**: Automatic discovery of Whisper installation
+- Scan common installation paths
+- Detect virtual environment automatically
+- Validate installation on first run
+- Suggest installation if not found
+
+#### 8. Cross-platform Support
+**Status**: Not started
+**Description**: Expand beyond Windows
+- Linux support
+- macOS support
+- Platform-specific path handling
+- Unified testing across platforms
+
+#### 9. Additional Features
+**Status**: Ideas for future consideration
+- Model comparison table in GUI
+- Export activity log to file
+- Custom hotkey configuration for Whisper (beyond spacebar)
+- Language selection for transcription
+- Multiple microphone support
+- Audio device selection in GUI
 
 ---
 
